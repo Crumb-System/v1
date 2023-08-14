@@ -121,7 +121,6 @@ class CRuMbAdmin(UserControl):
 
     @classmethod
     def run_app_kwargs(cls):
-        print((Path().parent.absolute() / 'assets').as_posix())
         return {
             'target': cls.run_target,
             'assets_dir': (Path().parent.absolute() / 'assets').as_posix(),

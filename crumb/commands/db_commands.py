@@ -33,7 +33,6 @@ class DbCommands(Command):
         assert all(app in db_config['apps'] for app in apps), 'available apps: ' + ', '.join(db_config['apps'])
         if init:
             for app_name in apps:
-                print([exe, '--app', app_name, 'init-ib', '--safe'])
                 subprocess.run([exe, '--app', app_name, 'init-db'])
         else:
             if migrate:

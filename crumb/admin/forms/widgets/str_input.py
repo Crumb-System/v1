@@ -48,10 +48,6 @@ class StrInputWidget(InputWidget[str]):
         self.input.value = v
 
     def _validate(self) -> None:
-        if self.value == '':
-            if self.required:
-                raise InputValidationError(msg='Поле обязательно')
-            return
         if self.max_length is not None and len(self.value) > self.max_length:
             raise InputValidationError(msg=f'Максимум символов - {self.max_length}')
         if self.min_length is not None and len(self.value) < self.min_length:
