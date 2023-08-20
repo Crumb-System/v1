@@ -42,6 +42,13 @@ class IntInputWidget(InputWidget[int]):
             raise InputValidationError(f'Максимум {self.max_value}')
 
     def set_value(self, value: int, initial: bool = False):
+        if isinstance(value, str):
+            value = ''.join(v for v in value if v.isdigit())
+            try:
+                value = int(value)
+            except ValueError:
+                self.value = value
+                return
         assert value is None or isinstance(value, int)
         self.value = '' if value is None else str(value)
 
