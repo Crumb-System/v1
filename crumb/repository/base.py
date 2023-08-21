@@ -230,8 +230,8 @@ class ReadRepository(BaseRepository[MODEL]):
 
     def __init__(
             self,
-            select_related: tuple[str] = EMPTY_TUPLE,
-            prefetch_related: tuple[str] = EMPTY_TUPLE,
+            select_related: tuple[str, ...] = EMPTY_TUPLE,
+            prefetch_related: tuple[str, ...] = EMPTY_TUPLE,
     ):
         self.select_related = select_related
         self.prefetch_related = prefetch_related

@@ -1,5 +1,3 @@
-import importlib
-
 from crumb.repository.base import REPOSITORY
 from crumb.utils import import_string, get_settings
 

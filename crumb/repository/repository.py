@@ -26,8 +26,8 @@ class Repository(ReadRepository[MODEL]):
             self,
             by: str = None,
             instance: MODEL = None,
-            select_related: tuple[str] = EMPTY_TUPLE,
-            prefetch_related: tuple[str] = EMPTY_TUPLE,
+            select_related: tuple[str, ...] = EMPTY_TUPLE,
+            prefetch_related: tuple[str, ...] = EMPTY_TUPLE,
     ):
         super().__init__(
             select_related=select_related,
