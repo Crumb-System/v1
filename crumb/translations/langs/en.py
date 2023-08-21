@@ -23,7 +23,8 @@ interface = InterfaceTranslation(
         'comment': 'Comment',
         'registrator': 'Registrator',
         'responsible': 'Responsible',
-        'unique_number': 'Number'
+        'unique_number': 'Number',
+        'type': 'Type',
     },
 )
 
