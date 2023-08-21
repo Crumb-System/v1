@@ -29,7 +29,7 @@ class BaseUserRepository(DirectoryRepository[USER_MODEL]):
     }
 
     # обязательны 1 буква и цифра; допустимы буквы (латиница), цифры и !@#$%^&*-_=+
-    password_pattern = re.compile('^(?=.*[A-Za-z])(?=.*[1-9])[A-Za-z1-9!@#$%^&*-_=+]{8,30}$')
+    password_pattern = re.compile('^(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9!@#$%^&*-_=+]{8,30}$')
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     async def _validate_password(

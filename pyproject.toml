@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "crumb"
-version = "1.0.2"
+version = "1.0.3"
 description = "Крошечная система для больших задач"
 authors = ["alta7700 <alta7700@mail.ru>"]
 readme = "README.md"
