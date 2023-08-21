@@ -31,7 +31,7 @@ class CRuMbAdmin(UserControl):
     _resources: ClassVar[dict[str, Type["Resource"]]] = {}
     title: ClassVar[str] = 'CRuMb Admin'
     menu_groups: ClassVar[list[Type[MenuGroup]]] = []
-    translations: ClassVar[AppTranslation]
+    translations: ClassVar[AppTranslation] = import_string(get_settings().APP_TRANSLATIONS)
     user_repository: ClassVar[Type["BaseUserRepository"]]
 
     def __init__(self, page: Page, user: "USER_MODEL"):
@@ -116,10 +116,6 @@ class CRuMbAdmin(UserControl):
         return self._inited_resources
 
     @classmethod
-    def _init_translations(cls):
-        cls.translations = importlib.import_module('configuration.translations').app_translations
-
-    @classmethod
     def run_app_kwargs(cls):
         return {
             'target': cls.run_target,
@@ -143,7 +139,6 @@ class CRuMbAdmin(UserControl):
 
     @classmethod
     async def on_startup(cls):
-        cls._init_translations()
         await db_connection.init()
         cls.user_repository = import_string(get_settings().USER_REPOSITORY)
         importlib.import_module('configuration.resources')
