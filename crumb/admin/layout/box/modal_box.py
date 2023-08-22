@@ -60,7 +60,6 @@ class ModalBox(Container, Box):
 
     async def did_mount_async(self):
         await self.load_content()
-        print(self.payload_container.controls)
 
     async def load_content(self):
         async with self.app.error_tracker():
