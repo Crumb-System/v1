@@ -4,3 +4,4 @@ from .table_cell import TableCell
 from .table_row import TableRow
 from .table_body import TableBody
 from .table import Table
+from .paginator import Paginator

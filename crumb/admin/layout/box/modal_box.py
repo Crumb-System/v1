@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
-from flet import Container, Card, Control, Row, Column, Text, MainAxisAlignment, ClipBehavior, ScrollMode,\
-    Theme, ColorScheme
+from flet import Container, Control, Row, Column, Text, MainAxisAlignment, ClipBehavior, Theme, ColorScheme
 
 from .box import Box
 from ..loader import Loader
@@ -18,12 +17,13 @@ class ModalBox(Container, Box):
             parent: "ContentBox",
             info: "PayloadInfo",
     ):
-        super().__init__(
-            padding=20,
+        Container.__init__(
+            self,
             top=0,
             bottom=0,
             left=0,
             right=0,
+            padding=50,
             theme=Theme(color_scheme=ColorScheme(background='#f0f4fa'))
         )
         self.parent = parent
@@ -41,27 +41,26 @@ class ModalBox(Container, Box):
         )
 
         # main_content
-        self.payload_container = Container()
-        self.content = Card(
-            content=Container(
-                content=Column([self.header, self.payload_container], scroll=ScrollMode.ALWAYS),
-                padding=10,
-                clip_behavior=ClipBehavior.ANTI_ALIAS_WITH_SAVE_LAYER,
-            ),
-            margin=30,
+        self.payload_container = Column([self.header, Loader()])
+        self.content = Container(
+            content=self.payload_container,
+            padding=10,
+            clip_behavior=ClipBehavior.ANTI_ALIAS_WITH_SAVE_LAYER,
+            bgcolor='background',
+            border_radius=12
         )
-        self.payload = Loader()
-
-    async def did_mount_async(self):
-        await self.load_content()
 
     @property
     def payload(self):
-        return self.payload_container.content
+        return self.payload_container.controls[1]
 
     @payload.setter
     def payload(self, v: Control):
-        self.payload_container.content = v
+        self.payload_container.controls[1] = v
+
+    async def did_mount_async(self):
+        await self.load_content()
+        print(self.payload_container.controls)
 
     async def load_content(self):
         async with self.app.error_tracker():

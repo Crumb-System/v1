@@ -10,9 +10,7 @@ class ListForm(BaseListForm):
         await self.app.open(PayloadInfo(
             entity=self.resource.entity(),
             method='edit',
-            query={
-                'pk': row.instance.pk
-            }
+            query={'pk': row.instance.pk}
         ))
 
     def get_action_bar(self) -> Row:

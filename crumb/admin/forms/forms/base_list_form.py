@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
 
-from flet import Row, TapEvent
+from flet import Row, TapEvent, Column
 
+from crumb.constants import EMPTY_TUPLE
 from crumb.orm import BaseModel
-from crumb.admin.components.table import Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell
+from crumb.admin.components.table import Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell, Paginator
 from . import Form
 from .. import Primitive, WidgetSchemaCreator
 from ..widgets import UserInput
@@ -13,16 +14,16 @@ if TYPE_CHECKING:
 
 
 class BaseListForm(Form):
-    body: Table
-    table: Table  # alias body
+    body: Column
 
     def __init__(
             self,
             box: "BOX",
             primitive: Primitive,
-            request_limit: int = None,
-            select_related: tuple[str] = None,
-            prefetch_related: tuple[str] = None,
+            per_page: int = 25,
+            per_page_variants: tuple[int, ...] = (10, 25, 50, 100),
+            select_related: tuple[str] = EMPTY_TUPLE,
+            prefetch_related: tuple[str] = EMPTY_TUPLE,
     ):
         super().__init__(box=box)
         self.app = self.box.app
@@ -30,50 +31,49 @@ class BaseListForm(Form):
         widget_creator = WidgetSchemaCreator(resource=self.resource, all_read_only=True, allow_groups=False)
         self.widget_schemas: list[UserInput] = [widget_creator.from_primitive_item(item) for item in primitive]
         assert len(self.widget_schemas) > 0
-        self.rows: list[TableRow] = []
-        self.items: list[BaseModel] = []
-        self.request_limit = request_limit
         self.current_total = 0
         self.has_next = True
         self.select_related = select_related
         self.prefetch_related = prefetch_related
 
-    async def did_mount_async(self):
-        await self.get_next_items()
-        await self.update_async()
-
-    def build_body(self) -> Table:
-        self.table = Table(
-            header=TableHeader(
-                cells=[
-                    TableHeaderCell(label=col.label, width=col.width)
-                    for col in self.widget_schemas
-                ]
-            ),
-            body=TableBody(
-                rows=self.rows,
-            )
+        self.table: Table[ListRecordRow] = Table(
+            header=TableHeader(cells=[
+                TableHeaderCell(label=col.label, width=col.width)
+                for col in self.widget_schemas
+            ]),
+            body=TableBody()
         )
-        return self.table
+        self.paginator = Paginator(
+            on_current_change=self.update_items,
+            per_page=per_page,
+            per_page_variants=per_page_variants,
+        )
+
+    async def did_mount_async(self):
+        await self.update_items()
+
+    def build_body(self):
+        return Column([self.table, self.paginator])
 
     def get_action_bar(self) -> Row:
         return Row([])
 
-    async def get_next_items(self):
-        new_items, total_count = await self.resource.repository(
+    async def update_items(self):
+        items, total = await self.resource.repository(
             select_related=self.select_related,
             prefetch_related=self.prefetch_related,
         ).get_all(
-            skip=self.current_total,
-            limit=self.request_limit,
+            skip=self.paginator.skip,
+            limit=self.paginator.limit,
             sort=[],
-            filters=[],
+            filters=[]
         )
-        self.current_total += len(new_items)
-        self.has_next = total_count != self.current_total
-        self.items.extend(new_items)
-        for item in new_items:
+        self.paginator.total = total // self.paginator.per_page + 1
+        self.paginator.build_pages()
+        self.table.remove_all_rows()
+        for item in items:
             self.add_row(item)
+        await self.update_async()
 
     def add_row(self, instance: BaseModel):
         self.table.add_row(ListRecordRow(

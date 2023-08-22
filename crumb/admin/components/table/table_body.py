@@ -1,6 +1,6 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Generic, TypeVar, Iterator
 
-from flet import ListView as FletListView
+from flet import Container, ListView as FletListView, ClipBehavior
 
 from crumb.utils import default_if_none
 from .table_row import TableRow
@@ -8,27 +8,27 @@ from .table_row import TableRow
 if TYPE_CHECKING:
     from . import Table, TableHeader
 
+TR = TypeVar('TR', bound=TableRow)
 
-class TableBody(FletListView):
-    table: "Table"
-    rows: list[TableRow]
+
+class TableBody(Generic[TR], Container):
+    table: "Table[TR]"
+    rows: list[TR]
     row_height = 30
 
-    _active_row: TableRow = None
+    _active_row: TR = None
 
     def __init__(
             self,
-            rows: list[TableRow] = None,
-            rows_count: int = None,
+            rows: list[TR] = None,
     ):
-        super().__init__(
-            item_extent=self.row_height,
-            spacing=0,
-        )
-        if rows_count:
-            self.height = self.row_height * rows_count
-        self.rows = default_if_none(rows, [])
-        self.controls = self.rows
+        super().__init__(clip_behavior=ClipBehavior.ANTI_ALIAS, expand=True)
+        self.content = self.list = FletListView(item_extent=self.row_height, spacing=0)
+        self.list.controls = default_if_none(rows, [])
+
+    @property
+    def rows(self):
+        return self.list.controls
 
     def set_table(self, table: "Table"):
         self.table = table
@@ -43,7 +43,13 @@ class TableBody(FletListView):
                 row.cells[i].width = w
         self.update_width()
 
-    def add_row(self, table_row: TableRow, index: int = -1):
+    def get_row(self, index: int) -> TR:
+        return self.rows[index]
+
+    def __iter__(self) -> Iterator[TR]:
+        return self.rows.__iter__()
+
+    def add_row(self, table_row: TR, index: int = -1):
         assert index == -1 or index >= 1
         assert table_row.length == self.header.length
         if index == -1:
@@ -53,6 +59,16 @@ class TableBody(FletListView):
         for i, hc in enumerate(self.header.cells):
             table_row.cells[i].width = hc.width
         table_row.set_body(self)
+        return table_row
+
+    def remove_row(self, index_or_row: int | TR):
+        if isinstance(index_or_row, int):
+            self.rows.pop(index_or_row)
+        else:
+            self.rows.remove(index_or_row)
+
+    def remove_all_rows(self):
+        self.rows.clear()
 
     def update_width(self):
         self.width = sum([c.width for c in self.header.cells])
@@ -66,11 +82,11 @@ class TableBody(FletListView):
         return self.table.header
 
     @property
-    def active_row(self) -> Optional[TableRow]:
+    def active_row(self) -> Optional[TR]:
         return self._active_row
 
     @active_row.setter
-    def active_row(self, v: Optional[TableRow]):
+    def active_row(self, v: Optional[TR]):
         if self._active_row and self._active_row is v:
             return
         prev = self._active_row
@@ -79,3 +95,12 @@ class TableBody(FletListView):
             prev.deactivate()
         if self._active_row:
             self._active_row.activate()
+
+    def swap_rows(self, r1: TR, r2: TR):
+        i1 = r1.index
+        i2 = r2.index
+        self.rows[i1], self.rows[i2] = r2, r1
+
+    @property
+    def scroll_to_async(self):
+        return self.list.scroll_to_async

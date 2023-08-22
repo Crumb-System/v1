@@ -3,7 +3,7 @@ from math import pi
 
 from flet import (
     Stack, Container, GestureDetector, Text, Icon,
-    icons, border, padding, MouseCursor,
+    icons, border, padding, margin, MouseCursor,
     DragStartEvent, DragUpdateEvent
 )
 
@@ -17,10 +17,10 @@ class SimpleWidgetContainer(BaseWidgetContainer[W], Stack):
     resize_start_height: int | float
 
     def __init__(self, widget: W):
-        BaseWidgetContainer.__init__(self, widget=widget)
         Stack.__init__(self)
+        BaseWidgetContainer.__init__(self, widget=widget)
 
-        self.container = Container(border_radius=12)
+        self.container = Container(border_radius=12, margin=margin.only(top=5))
         if self.widget.editable:
             self.gesture_detector = GestureDetector(
                 content=self.widget_with_tooltip,
@@ -41,7 +41,7 @@ class SimpleWidgetContainer(BaseWidgetContainer[W], Stack):
             padding=padding.symmetric(horizontal=3),
             bgcolor='background',
             left=10,
-            offset=(0, -0.5),
+            offset=(0, -0.25),
             visible=not not self.widget.label_text
         )
         self.controls = [self.container, self._label_container]

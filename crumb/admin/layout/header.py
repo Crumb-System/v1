@@ -17,7 +17,7 @@ class Header(Container):
     app: "CRuMbAdmin"
 
     def __init__(self, app: "CRuMbAdmin"):
-        super().__init__(bgcolor='#575B81', padding=padding.symmetric(horizontal=10))
+        super().__init__(bgcolor='primary', padding=padding.symmetric(horizontal=10))
         self.app = app
         self.content = Row(
             height=40,

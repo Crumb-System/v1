@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from flet import Control, Column, Container, Stack, BoxShadow, ClipBehavior, ScrollMode
+from flet import Control, Container, Stack, BoxShadow, ClipBehavior
 
 from ..loader import Loader
 from .box import Box
@@ -23,7 +23,7 @@ class ContentBox(Container, Box):
         super().__init__(
             padding=10,
             clip_behavior=ClipBehavior.ANTI_ALIAS_WITH_SAVE_LAYER,
-            # это чтобы растягивался на весь ContentBoxContainer
+            # чтобы растягивался на весь ContentBoxContainer
             top=0,
             right=0,
             left=0,
@@ -35,22 +35,16 @@ class ContentBox(Container, Box):
         self.resource = self.tab.resource
         self.on_close = self.tab.info.query.get('BOX_on_close')
 
-        self._root = Column(
-            controls=[Loader()],
-            scroll=ScrollMode.ALWAYS,
-        )
-        self._stack_controls: list[Control] = [self._root]
-        self.content = Stack(
-            self._stack_controls,
-        )
+        self._stack_controls: list[Control] = [Loader()]
+        self.content = Stack(self._stack_controls)
 
     @property
     def payload(self):
-        return self._root.controls[0]
+        return self._stack_controls[0]
 
     @payload.setter
     def payload(self, v: Control):
-        self._root.controls[0] = v
+        self._stack_controls[0] = v
 
     async def did_mount_async(self):
         await self.load_content()
@@ -102,7 +96,7 @@ class ContentsBoxContainer(Container):
                 offset=(0, 15),
                 color='#1C1B1F,0.2'
             ),
-            clip_behavior=ClipBehavior.ANTI_ALIAS_WITH_SAVE_LAYER
+            clip_behavior=ClipBehavior.ANTI_ALIAS_WITH_SAVE_LAYER,
         )
         self.app = app
         self.boxes = []

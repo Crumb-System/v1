@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any
 
-from flet import Control, Column, Row
+from flet import Control, Column, Row, ScrollMode
 
 from crumb.constants import UndefinedValue
 from crumb.exceptions import ObjectErrors
@@ -32,16 +32,11 @@ class SimpleInputForm(Form):
         self.fields_map = {}
         self.initial = initial
 
-    def build_body(self) -> Column:
-        return Column(controls=self.build_input_form())
+    def build_body(self):
+        return Column(controls=self.build_inputs(), scroll=ScrollMode.AUTO)
 
-    def build_input_form(self) -> list[Row | Column]:
+    def build_inputs(self) -> list[Row | Column]:
         return [self._build_item(item=item) for item in self.get_form_schema()]
-
-    def _create_widget_in_container(self, item: UserInput):
-        widget = item.widget(parent=self, initial=self.initial_for(item.name))
-        self.fields_map[item.name] = widget
-        return SimpleWidgetContainer(widget)
 
     def _build_item(self, item: UserInput | InputGroup) -> Row | Column | BaseWidgetContainer:
         if isinstance(item, UserInput):
@@ -56,6 +51,11 @@ class SimpleInputForm(Form):
             else:
                 raise ValueError('что-то пошло не так')
         return item.to_control(controls)
+
+    def _create_widget_in_container(self, item: UserInput):
+        widget = item.widget(parent=self, initial=self.initial_for(item.name))
+        self.fields_map[item.name] = widget
+        return SimpleWidgetContainer(widget)
 
     def get_action_bar(self) -> Row:
         return Row(controls=[])

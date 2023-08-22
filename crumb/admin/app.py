@@ -7,6 +7,7 @@ from typing import Type, TypeVar, Any, Callable, Coroutine, TYPE_CHECKING, Class
 
 from flet import (
     Page, UserControl, Control, Column, Row, Text,
+    Theme, ColorScheme,
     SnackBar, ControlEvent,
     app as flet_app
 )

@@ -19,7 +19,7 @@ class TableInputWidget(UserInputWidget[list[dict[str, Any]]], Container):
             'head': (head := tuple(schema.name for schema in self.object_schema.fields)),
             'values': (values := []),
         }
-        for widget in self.objects_list:
+        for widget in self.table:
             value = widget.final_value
             values.append(tuple(value.get(name, UndefinedValue) for name in head))
         return result
@@ -37,9 +37,18 @@ class TableInputWidget(UserInputWidget[list[dict[str, Any]]], Container):
         self.object_schema = object_schema
         self.variant = variant
         self.rows_count = rows_count
-        self.objects_list: list[ObjectTableRowWidget] = []
 
-        self.actions = Row([
+        self.actions = self.get_action_bar()
+        self.table = self.create_table()
+        self.content = Column([
+            self.actions,
+            self.table
+        ])
+        self.editable = False
+        self.__finalize_init__()
+
+    def get_action_bar(self):
+        return Row([
             IconButton(
                 icons.ADD_CIRCLE_OUTLINE_OUTLINED,
                 on_click=self.handle_add_row,
@@ -65,15 +74,8 @@ class TableInputWidget(UserInputWidget[list[dict[str, Any]]], Container):
                 tooltip='Переместить вниз'
             ),
         ], scroll=ScrollMode.AUTO)
-        self.table = self.create_table()
-        self.content = Column([
-            self.actions,
-            self.table
-        ])
-        self.editable = False
-        self.__finalize_init__()
 
-    def create_table(self) -> Table:
+    def create_table(self) -> Table[ObjectTableRowWidget]:
         return Table(
             header=TableHeader(
                 cells=[
@@ -81,10 +83,7 @@ class TableInputWidget(UserInputWidget[list[dict[str, Any]]], Container):
                     for col in self.object_schema.fields
                 ]
             ),
-            body=TableBody(
-                rows=self.objects_list,
-                rows_count=self.rows_count
-            ),
+            body=TableBody(),
         )
 
     def create_table_row(self, initial: BaseModel | dict[str, Any] = UndefinedValue) -> ObjectTableRowWidget:
@@ -95,57 +94,53 @@ class TableInputWidget(UserInputWidget[list[dict[str, Any]]], Container):
     async def handle_add_row(self, e):
         widget = self.create_table_row()
         widget.set_value({'ordering': self.table.body.length})
-        self.table.body.active_row = widget
-        await self.table.body.scroll_to_async(offset=-1, duration=10)
+        self.table.active_row = widget
+        await self.table.scroll_to_async(offset=-1, duration=10)
 
     async def handle_delete_row(self, e):
-        table_body = self.table.body
-        active_row: ObjectTableRowWidget = table_body.active_row  # type: ignore
+        active_row = self.table.active_row
+        if active_row is None:
+            return
+        idx = active_row.index
+        table_length = self.table.length
+        if idx == 0:
+            if table_length == 1:
+                self.table.active_row = None
+            else:
+                self.table.active_row = self.table.get_row(1)
+        elif idx == table_length - 1:
+            self.table.active_row = self.table.get_row(idx - 1)
+        else:
+            self.table.active_row = self.table.get_row(idx + 1)
+        self.table.remove_row(active_row)
+        for i, row in enumerate(self.table[idx:], start=idx + 1):
+            row.set_value({'ordering': i})
+        await self.table.update_async()
+
+    async def handle_move_row_up(self, e):
+        active_row = self.table.active_row
         if active_row is None:
             return
         idx = active_row.index
         if idx == 0:
-            if table_body.length == 1:
-                table_body.active_row = None
-            else:
-                table_body.active_row = table_body.rows[1]
-        elif idx == table_body.length - 1:
-            table_body.active_row = table_body.rows[idx - 1]
-        else:
-            table_body.active_row = table_body.rows[idx + 1]
-        table_body.rows.remove(active_row)
-        for i, row in enumerate(table_body.rows[idx:], start=idx + 1):
-            row: ObjectTableRowWidget
-            row.set_value({'ordering': i})
-        await table_body.scroll_to_async(offset=-1, duration=10)
-
-    async def handle_move_row_up(self, e):
-        active_row: ObjectTableRowWidget = self.table.body.active_row  # type: ignore
-        if not active_row:
             return
-        idx = active_row.index
-        if idx == 0:
-            return
-        rows = self.table.body.rows
-        row_up: ObjectTableRowWidget = rows[idx - 1]  # type: ignore
-        active_row.set_value({'ordering': idx})
-        row_up.set_value({'ordering': idx + 1})
-        rows[idx], rows[idx - 1] = row_up, active_row
+        self.swap_rows(active_row, self.table.get_row(idx - 1))
         await self.table.body.update_async()
 
     async def handle_move_row_down(self, e):
-        active_row: ObjectTableRowWidget = self.table.body.active_row  # type: ignore
-        if not active_row:
+        active_row = self.table.active_row
+        if active_row is None:
             return
         idx = active_row.index
-        rows = self.table.body.rows
-        if idx == len(rows) - 1:
+        if idx == self.table.length - 1:
             return
-        row_down: ObjectTableRowWidget = rows[idx + 1]  # type: ignore
-        active_row.set_value({'ordering': idx + 2})
-        row_down.set_value({'ordering': idx + 1})
-        rows[idx], rows[idx + 1] = row_down, active_row
-        await self.table.body.update_async()
+        self.swap_rows(active_row, self.table.get_row(idx + 1))
+        await self.table.update_async()
+
+    def swap_rows(self, r1: ObjectTableRowWidget, r2: ObjectTableRowWidget):
+        self.table.swap_rows(r1, r2)
+        r1.set_value({'ordering': r1.index + 1})
+        r2.set_value({'ordering': r2.index + 1})
 
     def set_value(self, value: Any, initial: bool = False):
         if initial:
@@ -154,16 +149,16 @@ class TableInputWidget(UserInputWidget[list[dict[str, Any]]], Container):
                 self.create_table_row(initial=v)
             return
         assert isinstance(value, dict) and all(isinstance(k, int) for k in value)
-        for k, v in value.items():
-            self.objects_list[k].set_value(v)
+        for index, row_value in value.items():
+            self.table.get_row(index).set_value(row_value)
 
     def set_error(self, err: dict[int, dict[str, Any]]):
-        for i, e in err.items():
-            self.objects_list[i].set_error(e)
+        for index, error in err.items():
+            self.table.get_row(index).set_error(error)
 
     def is_valid(self) -> bool:
         valid = True
-        for widget in self.objects_list:
+        for widget in self.table:
             if not widget.is_valid():
                 valid = False
         return valid
@@ -174,7 +169,7 @@ class TableInput(UserInput[TableInputWidget]):
     object_schema: ObjectTableRow = None
     variant: str = 'table'
     width: int = None
-    height: int = None
+    height: int = 400
     rows_count: int = 11
     default: list = field(default_factory=list)
 

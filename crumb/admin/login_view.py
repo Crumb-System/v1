@@ -50,7 +50,6 @@ class LoginForm(SimpleInputForm):
             on_value_change=clear_error_text
         )
     )
-    box: LoginView
 
     def __init__(
             self,
@@ -59,12 +58,12 @@ class LoginForm(SimpleInputForm):
         super().__init__(box=box)
         self.error_text = Text(color='error')
 
-    def build(self):
+    def build_body(self):
         return Column(
             controls=[
                 Text(self.box.app_cls.title, size=40, color='primary'),
                 self.error_text,
-                super().build(),
+                super().build_body(),
                 self.login_btn()
             ],
             alignment=MainAxisAlignment.CENTER,
