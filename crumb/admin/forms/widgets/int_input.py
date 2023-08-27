@@ -10,7 +10,7 @@ from .input import InputWidget, Input
 class IntInputWidget(InputWidget[int]):
     @property
     def final_value(self) -> int:
-        return int(self.value)
+        return None if self.value == '' else int(self.value)
 
     def __init__(
             self,

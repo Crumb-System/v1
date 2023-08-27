@@ -11,7 +11,7 @@ class FloatInputWidget(InputWidget[float]):
 
     @property
     def final_value(self) -> float:
-        return float(self.value)
+        return None if self.value == '' else round(float(self.value), self.decimal_places)
 
     def __init__(
             self,
