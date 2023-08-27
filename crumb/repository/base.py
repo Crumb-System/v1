@@ -1,7 +1,8 @@
 from typing import Generic, Type, cast, Optional, TypeVar, overload
 
 from tortoise import fields
-from tortoise.models import MetaInfo, QuerySet, Q
+from tortoise.models import MetaInfo
+from tortoise.queryset import QuerySet, Q, CountQuery
 from tortoise.transactions import in_transaction
 
 from crumb.constants import UndefinedValue, EMPTY_TUPLE
@@ -260,6 +261,25 @@ class ReadRepository(BaseRepository[MODEL]):
     def qs_prefetch_related(self) -> tuple[str, ...]:
         return EMPTY_TUPLE
 
+    def get_all_queryset(
+            self,
+            skip: Optional[int],
+            limit: Optional[int],
+            sort: SORT,
+            filters: FILTERS,
+    ) -> tuple[QuerySet[MODEL], CountQuery[MODEL]]:
+        query = self.get_queryset()
+        for f in filters:
+            query = f.filter(query)
+        all_query = query.count()
+        if sort:
+            query = query.order_by(*sort)
+        if skip:
+            query = query.offset(skip)
+        if limit:
+            query = query.limit(limit)
+        return query, all_query
+
     async def get_all(
             self,
             skip: Optional[int],
@@ -267,19 +287,15 @@ class ReadRepository(BaseRepository[MODEL]):
             sort: SORT,
             filters: FILTERS,
     ) -> tuple[list[MODEL], int]:
-        query = self.get_queryset()
-        for f in filters:
-            query = f.filter(query)
-        base_query = query
-        if sort:
-            query = query.order_by(*sort)
-        if skip:
-            query = query.offset(skip)
-        if limit:
-            query = query.limit(limit)
+        query, count_query = self.get_all_queryset(
+            skip=skip,
+            limit=limit,
+            sort=sort,
+            filters=filters,
+        )
         async with in_transaction():
             result = await query
-            count = await base_query.count()
+            count = await count_query
         return result, count
 
     def _get_many_queryset(self, item_pk_list: list[PK]) -> QuerySet[MODEL]:
@@ -289,12 +305,12 @@ class ReadRepository(BaseRepository[MODEL]):
         return await self._get_many_queryset(item_pk_list)
 
     @overload
-    async def get_one(self, value: PK) -> Optional[MODEL]: ...
+    async def get_one(self, value: PK) -> MODEL: ...
 
     @overload
-    async def get_one(self, value: ..., *, field_name: str) -> Optional[MODEL]: ...
+    async def get_one(self, value: ..., *, field_name: str) -> MODEL: ...
 
-    async def get_one(self, value, *, field_name='pk') -> Optional[MODEL]:
+    async def get_one(self, value, *, field_name='pk') -> MODEL:
         if field_name in self.model.IEXACT_FIELDS:
             field_name = field_name + '__iexact'
         instance = await self.get_queryset()\
