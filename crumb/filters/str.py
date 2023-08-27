@@ -11,22 +11,28 @@ __all__ = ["StrEqualFilter", "StrStartswithFilter", "StrEndswithFilter", "StrCon
 
 
 class StrBaseFilter(Filter[str]):
-    def __init__(self, *args, case_insensitive: bool = False, **kwargs):
+    def __init__(self, *args, case_insensitive: bool = UndefinedValue, **kwargs):
         super().__init__(*args, **kwargs)
-        self.case_insensitive = case_insensitive
+        self._case_insensitive = case_insensitive
 
     def copy(self) -> Self:
         return self.__class__(
             model=self.model,
             field=self.field,
-            case_insensitive=self.case_insensitive
+            case_insensitive=self._case_insensitive
         )
+
+    @property
+    def case_insensitive(self):
+        if self._case_insensitive is UndefinedValue:
+            return self.model.is_case_insensitive(self.field)
+        return self._case_insensitive
 
 
 class StrEqualFilter(StrBaseFilter):
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
         assert self.value is not UndefinedValue, f'{self.__name__}, {self.model.__name__}, {self.field}'
-        if self.model.is_case_insensitive(self.field):
+        if self.case_insensitive():
             field_name = self.field + '__iexact'
         else:
             field_name = self.field
@@ -36,7 +42,7 @@ class StrEqualFilter(StrBaseFilter):
 class StrStartswithFilter(StrBaseFilter):
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
         assert self.value is not UndefinedValue, f'{self.__name__}, {self.model.__name__}, {self.field}'
-        if self.model.is_case_insensitive(self.field):
+        if self.case_insensitive(self.field):
             field_name = self.field + '__istartswith'
         else:
             field_name = self.field + '__startswith'
@@ -46,7 +52,7 @@ class StrStartswithFilter(StrBaseFilter):
 class StrEndswithFilter(StrBaseFilter):
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
         assert self.value is not UndefinedValue, f'{self.__name__}, {self.model.__name__}, {self.field}'
-        if self.model.is_case_insensitive(self.field):
+        if self.case_insensitive(self.field):
             field_name = self.field + '__iendswith'
         else:
             field_name = self.field + '__endswith'
@@ -56,7 +62,7 @@ class StrEndswithFilter(StrBaseFilter):
 class StrContainsFilter(StrBaseFilter):
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
         assert self.value is not UndefinedValue, f'{self.__name__}, {self.model.__name__}, {self.field}'
-        if self.model.is_case_insensitive(self.field):
+        if self.case_insensitive(self.field):
             field_name = self.field + '__icontains'
         else:
             field_name = self.field + '__contains'
