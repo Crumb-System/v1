@@ -234,15 +234,17 @@ class ReadRepository(BaseRepository[MODEL]):
             self,
             select_related: tuple[str, ...] = EMPTY_TUPLE,
             prefetch_related: tuple[str, ...] = EMPTY_TUPLE,
+            annotations: dict[str, ...] = None,
     ):
         self.select_related = select_related
         self.prefetch_related = prefetch_related
+        self.annotations = annotations
 
     def get_queryset(self):
         query = self.model.all()
         if default_filters := self.qs_default_filters():
             query = query.filter(*default_filters)
-        if annotate_fields := self.qs_annotate_fields():
+        if annotate_fields := {**self.qs_annotate_fields(), **(self.annotations or {})}:
             query = query.annotate(**annotate_fields)
         if final_select_related := {*self.qs_select_related(), *self.select_related}:
             query = query.select_related(*final_select_related)

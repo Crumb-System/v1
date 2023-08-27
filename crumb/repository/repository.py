@@ -28,10 +28,12 @@ class Repository(ReadRepository[MODEL]):
             instance: MODEL = None,
             select_related: tuple[str, ...] = EMPTY_TUPLE,
             prefetch_related: tuple[str, ...] = EMPTY_TUPLE,
+            annotations: dict[str, ...] = None,
     ):
         super().__init__(
             select_related=select_related,
             prefetch_related=prefetch_related,
+            annotations=annotations,
         )
         self.by = by
         self.instance = instance
