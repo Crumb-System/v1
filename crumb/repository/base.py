@@ -311,7 +311,7 @@ class ReadRepository(BaseRepository[MODEL]):
     async def get_one(self, value: ..., *, field_name: str) -> MODEL: ...
 
     async def get_one(self, value, *, field_name='pk') -> MODEL:
-        if field_name in self.model.IEXACT_FIELDS:
+        if self.model.is_case_insensitive(field_name):
             field_name = field_name + '__iexact'
         instance = await self.get_queryset()\
             .get_or_none(**{field_name: value})

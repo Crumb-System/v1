@@ -17,7 +17,7 @@ class BaseUser(Directory):
     is_active: bool = orm_fields.BooleanField(default=True)
     created_at: datetime = orm_fields.DatetimeField(auto_now_add=True)
 
-    IEXACT_FIELDS = ('username',)
+    CASE_INSENSITIVE = ('username',)
 
     class Meta:
         abstract = True
