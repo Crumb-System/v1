@@ -18,10 +18,14 @@ class Filter(Generic[T]):
         self.value: T = value
 
     def __call__(self, value: T) -> Self:
+        new_instance = self.copy()
+        new_instance.value = value
+        return new_instance
+
+    def copy(self) -> Self:
         return self.__class__(
             model=self.model,
             field=self.field,
-            value=value,
         )
 
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:

@@ -1,14 +1,29 @@
+from typing import Self
+
 from tortoise.queryset import QuerySet
 
 from crumb.types import MODEL
 from crumb.constants import UndefinedValue
-from .base import Filter, EqualFilter
+from .base import Filter
 
 
 __all__ = ["StrEqualFilter", "StrStartswithFilter", "StrEndswithFilter", "StrContainsFilter"]
 
 
-class StrEqualFilter(EqualFilter[str]):
+class StrBaseFilter(Filter[str]):
+    def __init__(self, *args, case_insensitive: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.case_insensitive = case_insensitive
+
+    def copy(self) -> Self:
+        return self.__class__(
+            model=self.model,
+            field=self.field,
+            case_insensitive=self.case_insensitive
+        )
+
+
+class StrEqualFilter(StrBaseFilter):
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
         assert self.value is not UndefinedValue, f'{self.__name__}, {self.model.__name__}, {self.field}'
         if self.model.is_case_insensitive(self.field):
@@ -18,7 +33,7 @@ class StrEqualFilter(EqualFilter[str]):
         return query.filter(**{field_name: self.value})
 
 
-class StrStartswithFilter(Filter[str]):
+class StrStartswithFilter(StrBaseFilter):
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
         assert self.value is not UndefinedValue, f'{self.__name__}, {self.model.__name__}, {self.field}'
         if self.model.is_case_insensitive(self.field):
@@ -28,7 +43,7 @@ class StrStartswithFilter(Filter[str]):
         return query.filter(**{field_name: self.value})
 
 
-class StrEndswithFilter(Filter[str]):
+class StrEndswithFilter(StrBaseFilter):
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
         assert self.value is not UndefinedValue, f'{self.__name__}, {self.model.__name__}, {self.field}'
         if self.model.is_case_insensitive(self.field):
@@ -38,7 +53,7 @@ class StrEndswithFilter(Filter[str]):
         return query.filter(**{field_name: self.value})
 
 
-class StrContainsFilter(Filter[str]):
+class StrContainsFilter(StrBaseFilter):
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
         assert self.value is not UndefinedValue, f'{self.__name__}, {self.model.__name__}, {self.field}'
         if self.model.is_case_insensitive(self.field):
