@@ -32,7 +32,7 @@ class StrBaseFilter(Filter[str]):
 class StrEqualFilter(StrBaseFilter):
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
         assert self.value is not UndefinedValue, f'{self.__name__}, {self.model.__name__}, {self.field}'
-        if self.case_insensitive():
+        if self.case_insensitive:
             field_name = self.field + '__iexact'
         else:
             field_name = self.field
@@ -42,7 +42,7 @@ class StrEqualFilter(StrBaseFilter):
 class StrStartswithFilter(StrBaseFilter):
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
         assert self.value is not UndefinedValue, f'{self.__name__}, {self.model.__name__}, {self.field}'
-        if self.case_insensitive(self.field):
+        if self.case_insensitive:
             field_name = self.field + '__istartswith'
         else:
             field_name = self.field + '__startswith'
@@ -52,7 +52,7 @@ class StrStartswithFilter(StrBaseFilter):
 class StrEndswithFilter(StrBaseFilter):
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
         assert self.value is not UndefinedValue, f'{self.__name__}, {self.model.__name__}, {self.field}'
-        if self.case_insensitive(self.field):
+        if self.case_insensitive:
             field_name = self.field + '__iendswith'
         else:
             field_name = self.field + '__endswith'
@@ -62,7 +62,7 @@ class StrEndswithFilter(StrBaseFilter):
 class StrContainsFilter(StrBaseFilter):
     def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
         assert self.value is not UndefinedValue, f'{self.__name__}, {self.model.__name__}, {self.field}'
-        if self.case_insensitive(self.field):
+        if self.case_insensitive:
             field_name = self.field + '__icontains'
         else:
             field_name = self.field + '__contains'
