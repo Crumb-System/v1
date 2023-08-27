@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Self
+from typing import TypeVar, Generic, Self, Type
 
 from tortoise.queryset import QuerySet
 
@@ -12,7 +12,7 @@ T = TypeVar('T')
 
 class Filter(Generic[T]):
 
-    def __init__(self, model: MODEL, field: str, value: T = UndefinedValue):
+    def __init__(self, model: Type[MODEL], field: str, value: T = UndefinedValue):
         self.model = model
         self.field = field
         self.value: T = value
