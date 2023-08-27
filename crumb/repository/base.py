@@ -2,7 +2,7 @@ from typing import Generic, Type, cast, Optional, TypeVar, overload
 
 from tortoise import fields
 from tortoise.models import MetaInfo
-from tortoise.queryset import QuerySet, Q, CountQuery
+from tortoise.queryset import QuerySet, Q
 from tortoise.transactions import in_transaction
 
 from crumb.constants import UndefinedValue, EMPTY_TUPLE
@@ -262,25 +262,6 @@ class ReadRepository(BaseRepository[MODEL]):
     def qs_prefetch_related(self) -> tuple[str, ...]:
         return EMPTY_TUPLE
 
-    def get_all_queryset(
-            self,
-            skip: Optional[int],
-            limit: Optional[int],
-            sort: list[str],
-            filters: list[Filter],
-    ) -> tuple[QuerySet[MODEL], CountQuery[MODEL]]:
-        query = self.get_queryset()
-        for f in filters:
-            query = f.filter(query)
-        all_query = query.count()
-        if sort:
-            query = query.order_by(*sort)
-        if skip:
-            query = query.offset(skip)
-        if limit:
-            query = query.limit(limit)
-        return query, all_query
-
     async def get_all(
             self,
             skip: Optional[int],
@@ -288,12 +269,16 @@ class ReadRepository(BaseRepository[MODEL]):
             sort: list[str],
             filters: list[Filter],
     ) -> tuple[list[MODEL], int]:
-        query, count_query = self.get_all_queryset(
-            skip=skip,
-            limit=limit,
-            sort=sort,
-            filters=filters,
-        )
+        query = self.get_queryset()
+        for f in filters:
+            query = f.filter(query)
+        count_query = query.count()
+        if sort:
+            query = query.order_by(*sort)
+        if skip:
+            query = query.offset(skip)
+        if limit:
+            query = query.limit(limit)
         async with in_transaction():
             result = await query
             count = await count_query
