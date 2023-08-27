@@ -2,8 +2,9 @@ from typing import TypeVar, Generic, Self
 
 from tortoise.queryset import QuerySet
 
-from crumb.constants import UndefinedValue
 from crumb.types import MODEL
+from crumb.constants import UndefinedValue
+
 
 T = TypeVar('T')
 

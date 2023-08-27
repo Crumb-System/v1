@@ -7,14 +7,11 @@ from crumb.orm import fields as orm_fields
 
 from crumb.orm.base_model import BaseModel, ListValueModel
 from .enums import FieldTypes
-from .filters import Filter
 
 
 MODEL = TypeVar('MODEL', bound=BaseModel)
 LIST_VALUE_MODEL = TypeVar('LIST_VALUE_MODEL', bound=ListValueModel)
 PK = TypeVar('PK', int, str, UUID)
-SORT = list[str]
-FILTERS = list[Filter]
 DATA = dict[str, Any]
 FK_TYPE = orm_fields.IntField | orm_fields.SmallIntField | orm_fields.BigIntField |\
           orm_fields.UUIDField | orm_fields.CharField | fields.Field
