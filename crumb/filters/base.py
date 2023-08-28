@@ -44,7 +44,7 @@ class EqualFilter(Filter[T]):
         return query.filter(**{self.field: self.value})
 
 
-class InFilter(Filter[T]):
+class InFilter(Filter[Iterable[T]]):
 
     def _value_checks(self):
         super()._value_checks()
