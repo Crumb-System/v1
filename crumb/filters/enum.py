@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Iterable
 
 from .base import EqualFilter, InFilter
 
@@ -10,5 +9,5 @@ class EnumEqualFilter(EqualFilter[Enum]):
     pass
 
 
-class EnumInFilter(InFilter[Iterable[Enum]]):
+class EnumInFilter(InFilter[Enum]):
     pass
