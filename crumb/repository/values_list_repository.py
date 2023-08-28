@@ -9,7 +9,7 @@ from .base import BaseRepository
 from ..constants import UndefinedValue
 from ..enums import FieldTypes
 from ..orm import BaseModel
-from ..types import LIST_VALUE_MODEL, RepositoryDescription, ValuesListData, PK
+from ..types import LIST_VALUE_MODEL, RepositoryDescription, ValuesListData, PK, DATA
 from ..exceptions import ListFieldError, UnexpectedDataKey, AnyFieldError, InvalidType, FieldRequired, FieldError, \
     ObjectErrors, NotFoundFK
 
@@ -50,6 +50,9 @@ class ValuesListRepository(BaseRepository[LIST_VALUE_MODEL]):
             .values('last_number')
         last_number = result.get('last_number') or 1
         await self.create_list(data=data, start_ordering=last_number)
+
+    async def append(self, row: DATA):
+        await self.add({'head': tuple(k for k in row.keys()), 'values': [tuple(v for v in row.values())]})
 
     async def edit_list(self, new_data: ValuesListData):
         assert self.owner_instance
