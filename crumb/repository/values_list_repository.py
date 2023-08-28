@@ -120,9 +120,10 @@ class ValuesListRepository(BaseRepository[LIST_VALUE_MODEL]):
             raise UnexpectedDataKey(f'{field_name} is generated for {self.__class__}')
         if field.unique:
             raise Exception('values_list field can`t be unique')
+        validator = getattr(self, f'_validate_{field.model_field_name}', self.validate_db_field)
         for i, value in enumerate(value_list):
             try:
-                await self.validate_db_field(field=field, value=value, is_required=is_required)
+                await validator(field=field, value=value, is_required=is_required)
             except FieldError as e:
                 self.set_object_error(list_error=list_error, index=i, field_name=field_name, error=e)
 
