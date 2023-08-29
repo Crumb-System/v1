@@ -136,7 +136,8 @@ class Repository(ReadRepository[MODEL]):
                 relation_field = self.get_field_instance(field_name).relation_source_field  # type: ignore
                 remote_repository_cls = self.repository_of(field_name)
                 if issubclass(remote_repository_cls, ValuesListRepository):
-                    await remote_repository_cls(owner_instance=instance).create_list(bfk_data)
+                    if bfk_data['values']:
+                        await remote_repository_cls(owner_instance=instance).create_list(bfk_data)
                     continue
                 remote_repository_cls = cast(Type[Repository], remote_repository_cls)
                 for value in bfk_data:
@@ -509,8 +510,9 @@ class Repository(ReadRepository[MODEL]):
 
         remote_repository_cls = self.repository_of(field_name)
         if issubclass(remote_repository_cls, ValuesListRepository):
-            remote_repository_cls = cast(Type[ValuesListRepository], remote_repository_cls)
-            await remote_repository_cls(owner_instance=self.instance).validate_list(values)
+            if values['values']:
+                remote_repository_cls = cast(Type[ValuesListRepository], remote_repository_cls)
+                await remote_repository_cls(owner_instance=self.instance).validate_list(values)
             return
         list_errors = ListFieldError()
 

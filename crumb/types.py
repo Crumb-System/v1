@@ -19,8 +19,8 @@ FK_TYPE = orm_fields.IntField | orm_fields.SmallIntField | orm_fields.BigIntFiel
 
 BackFKData = list[DATA]
 ValuesListData = TypedDict('ValuesListData', fields={
-    'head': tuple[str],
-    'values': list[tuple[...]]
+    'head': tuple[str, ...],
+    'values': list[tuple[Any, ...]]
 })
 
 

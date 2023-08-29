@@ -1,6 +1,6 @@
-from .base import EqualFilter, InFilter
+from .base import EqualFilter, InFilter, LessFilter, MoreFilter
 
-__all__ = ["IntEqualFilter", "IntInFilter"]
+__all__ = ["IntEqualFilter", "IntInFilter", "IntLessFilter", "IntMoreFilter"]
 
 
 class IntEqualFilter(EqualFilter[int]):
@@ -8,4 +8,12 @@ class IntEqualFilter(EqualFilter[int]):
 
 
 class IntInFilter(InFilter[int]):
+    pass
+
+
+class IntLessFilter(LessFilter[int]):
+    pass
+
+
+class IntMoreFilter(MoreFilter[int]):
     pass

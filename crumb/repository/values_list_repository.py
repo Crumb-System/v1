@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Type, TYPE_CHECKING, Optional
+from typing import Any, Type, TYPE_CHECKING, Optional, Generic
 
 from tortoise import fields
 from tortoise.exceptions import ValidationError
@@ -9,7 +9,7 @@ from .base import BaseRepository
 from ..constants import UndefinedValue
 from ..enums import FieldTypes
 from ..orm import BaseModel
-from ..types import LIST_VALUE_MODEL, RepositoryDescription, ValuesListData, PK, DATA
+from ..types import LIST_VALUE_MODEL, MODEL, RepositoryDescription, ValuesListData, PK, DATA
 from ..exceptions import ListFieldError, UnexpectedDataKey, AnyFieldError, InvalidType, FieldRequired, FieldError, \
     ObjectErrors, NotFoundFK
 
@@ -17,15 +17,19 @@ if TYPE_CHECKING:
     from .repository import Repository
 
 
-class ValuesListRepository(BaseRepository[LIST_VALUE_MODEL]):
+class ValuesListRepository(Generic[LIST_VALUE_MODEL, MODEL], BaseRepository[LIST_VALUE_MODEL]):
 
-    hidden_fields = {'owner', 'owner_id'}
+    hidden_fields = {'id', 'owner', 'owner_id'}
 
-    def __init__(self, owner_instance: Optional[BaseModel] = None):
+    def __init__(self, owner_instance: Optional[MODEL] = None):
         self.owner_instance = owner_instance
 
     async def get_records(self) -> list[LIST_VALUE_MODEL]:
         return await self.model.filter(owner=self.owner_instance).order_by('ordering')
+
+    @classmethod
+    def get_row_data(cls, head: tuple[str, ...], value: tuple[str, ...]) -> DATA:
+        return {k: v for j, k in enumerate(head) if (v := value[j]) is not UndefinedValue}
 
     async def create_list(self, data: ValuesListData, start_ordering: int = 1):
         assert self.owner_instance
@@ -34,7 +38,7 @@ class ValuesListRepository(BaseRepository[LIST_VALUE_MODEL]):
         head = data['head']
         values = data['values']
         for i, value in enumerate(values, start=start_ordering):
-            record_data = {k: v for j, k in enumerate(head) if (v := value[j]) is not UndefinedValue}
+            record_data = self.get_row_data(head=head, value=value)
             record_data['ordering'] = i
             record = self.model(owner=self.owner_instance, **record_data)
             record.set_pk()
@@ -48,8 +52,8 @@ class ValuesListRepository(BaseRepository[LIST_VALUE_MODEL]):
             .annotate(last_number=Max('ordering'))\
             .first()\
             .values('last_number')
-        last_number = result.get('last_number') or 1
-        await self.create_list(data=data, start_ordering=last_number)
+        last_number = result.get('last_number') or 0
+        await self.create_list(data=data, start_ordering=last_number + 1)
 
     async def append(self, row: DATA):
         await self.add({'head': tuple(k for k in row.keys()), 'values': [tuple(v for v in row.values())]})
@@ -57,13 +61,14 @@ class ValuesListRepository(BaseRepository[LIST_VALUE_MODEL]):
     async def edit_list(self, new_data: ValuesListData):
         assert self.owner_instance
         await self.clear()
-        await self.create_list(data=new_data)
+        if new_data['values']:
+            await self.create_list(data=new_data)
 
     async def clear(self):
         assert self.owner_instance
         await self.model.filter(owner=self.owner_instance).delete()
 
-    async def validate_list(self, data: ValuesListData):
+    async def validate_list(self, data: ValuesListData, check_required: bool = True):
         list_error = ListFieldError()
         required, pairs = self.required_and_pairs()
         head = data['head']
@@ -104,6 +109,9 @@ class ValuesListRepository(BaseRepository[LIST_VALUE_MODEL]):
                     list_error=list_error
                 )
 
+        if required and check_required:
+            raise ValueError(required)
+
         if list_error:
             raise list_error
 
@@ -121,9 +129,11 @@ class ValuesListRepository(BaseRepository[LIST_VALUE_MODEL]):
         if field.unique:
             raise Exception('values_list field can`t be unique')
         validator = getattr(self, f'_validate_{field.model_field_name}', self.validate_db_field)
+        head, values = data['head'], data['values']
         for i, value in enumerate(value_list):
+            row = self.get_row_data(head=head, value=values[i])
             try:
-                await validator(field=field, value=value, is_required=is_required)
+                await validator(field=field, value=value, is_required=is_required, row=row)
             except FieldError as e:
                 self.set_object_error(list_error=list_error, index=i, field_name=field_name, error=e)
 
@@ -131,7 +141,8 @@ class ValuesListRepository(BaseRepository[LIST_VALUE_MODEL]):
             self,
             field: fields.Field,
             value: Any,
-            is_required: bool
+            is_required: bool,
+            row: DATA
     ):
         if value is None and not field.null:
             raise FieldRequired
@@ -208,5 +219,4 @@ class ValuesListRepository(BaseRepository[LIST_VALUE_MODEL]):
                 or v in (FieldTypes.FK_PK, FieldTypes.FK)
                 for v in description.all.values()
             ), description.all
-        assert not cls.opts().unique_together
         return description
