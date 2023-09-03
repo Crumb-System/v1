@@ -5,18 +5,26 @@ from tortoise.queryset import QuerySet
 from crumb.types import MODEL
 from crumb.constants import UndefinedValue
 
-__all__ = ["Filter", "EqualFilter", "InFilter", "LessFilter", "MoreFilter", "T"]
+__all__ = ["BaseFilter", "Filter", "EqualFilter", "InFilter", "LessFilter", "MoreFilter", "T"]
 
 T = TypeVar('T')
 
 
-class Filter(Generic[T]):
+class BaseFilter(Generic[T]):
+    def __init__(self, value: T = UndefinedValue):
+        self.value: T = value
+
+    def filter(self, query: QuerySet[MODEL]) -> QuerySet[MODEL]:
+        raise NotImplementedError()
+
+
+class Filter(BaseFilter[T]):
     value_factory: Callable[[], T] = None
 
     def __init__(self, model: Type[MODEL], field: str, value: T = UndefinedValue):
         self.model = model
         self.field = field
-        self.value: T = value
+        super().__init__(value=value)
 
     def __call__(self, value: T) -> Self:
         new_instance = self.copy()

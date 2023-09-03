@@ -8,7 +8,7 @@ from tortoise.transactions import in_transaction
 from crumb.constants import UndefinedValue, EMPTY_TUPLE
 from crumb.enums import FieldTypes
 from crumb.exceptions import ItemNotFound
-from crumb.filters import Filter
+from crumb.filters import BaseFilter
 from crumb.maps import field_instance_to_type
 from crumb.orm import BaseModel
 from crumb.types import MODEL, PK, RepositoryDescription
@@ -269,7 +269,7 @@ class ReadRepository(BaseRepository[MODEL]):
             skip: Optional[int],
             limit: Optional[int],
             sort: list[str],
-            filters: list[Filter],
+            filters: list[BaseFilter],
     ) -> tuple[list[MODEL], int]:
         query = self.get_queryset()
         for f in filters:
