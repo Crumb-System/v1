@@ -8,7 +8,7 @@ packages = [{ include = "crumb" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-flet = "0.9.0"
+flet = "0.10.1"
 tortoise-orm = "0.20.0"
 asyncpg = "0.28.0"
 aerich = "0.7.2"
