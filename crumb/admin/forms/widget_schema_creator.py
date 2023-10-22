@@ -186,6 +186,7 @@ class WidgetSchemaCreator:
         constraints = field.constraints
         kwargs['min_value'] = constraints['ge']
         kwargs['max_value'] = constraints['le']
+        kwargs['decimal_places'] = constraints['decimal_places']
         kwargs.update(self.pop_allowed_extra(extra, 'min_value', 'max_value', 'decimal_places'))
         self.raise_if_unexpected_extra(field, extra)
         return widgets.FloatInput(**kwargs)

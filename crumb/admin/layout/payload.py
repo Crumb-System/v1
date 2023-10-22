@@ -1,8 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Protocol, TYPE_CHECKING, Optional, Callable, Coroutine
-
-if TYPE_CHECKING:
-    from .modal_box import ModalBox
+from typing import Any, Optional
 
 
 @dataclass

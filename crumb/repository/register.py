@@ -1,5 +1,5 @@
 from crumb.repository.base import REPOSITORY
-from crumb.utils import import_string, get_settings
+from crumb.utils import get_app_translations
 
 
 def register_repository(repo_cls: REPOSITORY) -> REPOSITORY:
@@ -9,5 +9,5 @@ def register_repository(repo_cls: REPOSITORY) -> REPOSITORY:
     if repo_name in repo_cls.model.REPOSITORIES:
         raise ValueError(f'{repo_cls.model} уже имеет репозиторий с именем {repo_name}')
     repo_cls.model.REPOSITORIES[repo_name] = repo_cls
-    import_string(get_settings().APP_TRANSLATIONS).add_repository(repo_cls)
+    get_app_translations().add_repository(repo_cls)
     return repo_cls

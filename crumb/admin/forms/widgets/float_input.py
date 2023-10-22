@@ -4,6 +4,7 @@ from typing import Optional
 from flet import KeyboardType
 
 from crumb.admin.exceptions import InputValidationError
+from crumb.constants import UndefinedValue
 from .input import InputWidget, Input
 
 
@@ -52,8 +53,8 @@ class FloatInputWidget(InputWidget[float]):
             except ValueError:
                 self.value = value
                 return
-        assert value is None or isinstance(value, float), f'value is {value}'
-        if value is None:
+        assert value is None or value is UndefinedValue or isinstance(value, float), f'{self.name} is {value}'
+        if value is None or value is UndefinedValue:
             self.value = ''
         else:
             self.value = f'{float(value):.{self.decimal_places}f}'

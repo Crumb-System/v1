@@ -6,6 +6,8 @@ from flet import (
     MainAxisAlignment, padding
 )
 
+from .payload import PayloadInfo
+
 if TYPE_CHECKING:
     from ..app import CRuMbAdmin
 
@@ -28,11 +30,19 @@ class Header(Container):
                     PopupMenuButton(
                         content=Icon(icons.MORE_VERT_ROUNDED, color='background'),
                         items=[
-                            PopupMenuItem(text="Выход", on_click=self.app.logout),
+                            PopupMenuItem(text="Сменить пароль", on_click=self.open_current_user_password_change_form),
                             # PopupMenuItem(),  # divider
+                            PopupMenuItem(text="Выход", on_click=self.app.logout),
                         ],
                     )
                 ])
             ],
             alignment=MainAxisAlignment.SPACE_BETWEEN,
         )
+
+    async def open_current_user_password_change_form(self, e=None):
+        await self.app.open(PayloadInfo(
+            entity=self.app.user_resource.entity(),
+            method='password_change',
+            query={'user': self.app.user}
+        ))

@@ -103,5 +103,5 @@ class SimpleInputForm(Form):
         for name, value in data.items():
             self.fields_map[name].set_value(value)
 
-    def handle_value_change(self, widget: UserInputWidget):
+    async def handle_value_change(self, widget: UserInputWidget):
         pass

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 from flet import Row, TapEvent, Column
 
@@ -24,6 +24,7 @@ class BaseListForm(Form):
             per_page_variants: tuple[int, ...] = (10, 25, 50, 100),
             select_related: tuple[str] = EMPTY_TUPLE,
             prefetch_related: tuple[str] = EMPTY_TUPLE,
+            sort: Sequence[str] = EMPTY_TUPLE
     ):
         super().__init__(box=box)
         self.app = self.box.app
@@ -48,6 +49,7 @@ class BaseListForm(Form):
             per_page=per_page,
             per_page_variants=per_page_variants,
         )
+        self.sort = [sort] if isinstance(sort, str) else (EMPTY_TUPLE if sort is None else sort)
 
     async def did_mount_async(self):
         await self.update_items()
@@ -65,7 +67,7 @@ class BaseListForm(Form):
         ).get_all(
             skip=self.paginator.skip,
             limit=self.paginator.limit,
-            sort=[],
+            sort=self.sort,
             filters=[]
         )
         self.paginator.total = total // self.paginator.per_page + 1

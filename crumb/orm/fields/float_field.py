@@ -11,6 +11,7 @@ class FloatField(fields.FloatField):
             self,
             min_value: float | int = None,
             max_value: float | int = None,
+            decimal_places: int = 3,
             editable: bool = True,
             **kwargs
     ):
@@ -22,11 +23,13 @@ class FloatField(fields.FloatField):
         if max_value is not None:
             self.max_value = float(max_value)
             self.validators.append(validators.MaxValueValidator(self.max_value))
+        self.decimal_places = decimal_places
 
     @property
     def constraints(self) -> dict:
         return {
             'ge': self.min_value,
             'le': self.max_value,
+            'decimal_places': self.decimal_places,
             'editable': self.editable,
         }

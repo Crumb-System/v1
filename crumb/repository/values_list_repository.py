@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from .repository import Repository
 
 
-class ValuesListRepository(Generic[LIST_VALUE_MODEL, MODEL], BaseRepository[LIST_VALUE_MODEL]):
+class ValuesListRepository(BaseRepository[LIST_VALUE_MODEL], Generic[LIST_VALUE_MODEL, MODEL]):
 
     hidden_fields = {'id', 'owner', 'owner_id'}
 

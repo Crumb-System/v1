@@ -1,9 +1,9 @@
-from typing import Callable, Optional, Coroutine, TYPE_CHECKING, Type, TypeVar
+from typing import Callable, Optional, Coroutine, TYPE_CHECKING, Type, TypeVar, Any
 
-from flet import Control, Text
+from flet import Control
 
 from crumb.types import PK
-from crumb.exceptions import ObjectErrors, ItemNotFound
+from crumb.exceptions import ObjectErrors
 from crumb.constants import EMPTY_TUPLE
 from crumb.entities.directories import DirectoryRepository
 from crumb.entities.documents import DocumentRepository
@@ -33,6 +33,7 @@ class CrudResource(Resource[REP]):
     edit_model_form: Optional[Type[ModelInputForm[REP]]] = None
     edit_form_primitive: Primitive = None
 
+    list_base_sort: tuple[str, ...] = EMPTY_TUPLE
     common_select_related: tuple[str, ...] = EMPTY_TUPLE
     common_prefetch_related: tuple[str, ...] = EMPTY_TUPLE
     list_select_related: tuple[str, ...] = EMPTY_TUPLE
@@ -50,6 +51,9 @@ class CrudResource(Resource[REP]):
 
     async def get_list_prefetch_related(self) -> tuple[str, ...]:
         return *self.common_prefetch_related, *self.list_prefetch_related
+
+    async def get_list_base_sort(self) -> tuple[str, ...]:
+        return self.list_base_sort
 
     async def get_choice_primitive(self):
         return self.choice_form_primitive or self.list_form_primitive
@@ -88,6 +92,7 @@ class CrudResource(Resource[REP]):
             primitive=primitive or await self.get_list_primitive(),
             select_related=await self.get_list_select_related(),
             prefetch_related=await self.get_list_prefetch_related(),
+            sort=await self.get_list_base_sort()
         )
         return self.with_tab_title(view, 'list')
 
@@ -103,6 +108,7 @@ class CrudResource(Resource[REP]):
             make_choice=make_choice,
             select_related=await self.get_list_select_related(),
             prefetch_related=await self.get_list_prefetch_related(),
+            sort=await self.get_list_base_sort()
         )
         return self.with_tab_title(view, 'choice')
 
@@ -111,11 +117,13 @@ class CrudResource(Resource[REP]):
             box: "BOX",
             on_success: Callable[[ModelInputForm[REP], "BaseModel"], Coroutine[..., ..., None]] = None,
             on_error: Callable[[ModelInputForm[REP], "ObjectErrors"], Coroutine[..., ..., None]] = None,
+            initial: dict[str, Any] = None
     ) -> ModelInputForm[REP]:
         model_form = self.create_model_form or self.model_form
         form = model_form(
             resource=self,
             box=box,
+            initial=initial,
             primitive=await self.get_create_form_primitive(),
             on_success=on_success,
             on_error=on_error,

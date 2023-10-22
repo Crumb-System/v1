@@ -1,6 +1,10 @@
 import importlib
 import re
-from typing import Any, TypeVar
+from typing import Any, TypeVar, TYPE_CHECKING, Type
+
+if TYPE_CHECKING:
+    from crumb.users.repository import BaseUserRepository
+    from crumb.users.resource import BaseUserResource
 
 
 def remove_extra_spaces(string: str) -> str:
@@ -40,3 +44,22 @@ def import_string(dotted_path: str) -> Any:
 
 def get_settings():
     return importlib.import_module('configuration.settings')
+
+
+def get_flet_app():
+    return import_string(get_settings().FLET_APP)
+
+
+def get_app_translations():
+    tr_path = getattr(get_settings(), 'APP_TRANSLATIONS', 'configuration.translations.app_translations')
+    return import_string(tr_path)
+
+
+def get_user_repository() -> Type["BaseUserRepository"]:
+    repo_path = getattr(get_settings(), 'USER_REPOSITORY', 'configuration.directories.users.repository.UserRepository')
+    return import_string(repo_path)
+
+
+def get_user_resource() -> Type["BaseUserResource"]:
+    resource_path = getattr(get_settings(), 'USER_RESOURCE', 'configuration.directories.users.resource.UserResource')
+    return import_string(resource_path)

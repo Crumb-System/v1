@@ -20,6 +20,7 @@ class FieldTypes(StrEnum):
     BACK_O2O = 'back_o2o'
     BACK_FK = 'back_fk'
     HIDDEN = 'hidden'
+    UNDEFINED = 'undefined'
 
     def is_hidden(self):
         return self is FieldTypes.HIDDEN

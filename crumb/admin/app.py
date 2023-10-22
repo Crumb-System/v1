@@ -7,7 +7,6 @@ from typing import Type, TypeVar, Any, Callable, Coroutine, TYPE_CHECKING, Class
 
 from flet import (
     Page, UserControl, Control, Column, Row, Text,
-    Theme, ColorScheme,
     SnackBar, ControlEvent,
     app as flet_app
 )
@@ -17,13 +16,13 @@ from crumb.translations.app_translation import AppTranslation
 from crumb.orm import connection as db_connection
 from crumb.admin.layout import Header, TabsBar, PayloadInfo, Sidebar, MenuGroup, ContentsBoxContainer, Popover, Popup
 from crumb.admin.resources import Resource
+from crumb.utils import get_app_translations, get_user_repository, get_user_resource
 
 from .components.errors import UnhandledErrorContainer
 from .login_view import LoginView
-from ..utils import import_string, get_settings
 
 if TYPE_CHECKING:
-    from crumb.users.repository import BaseUserRepository, USER_MODEL
+    from crumb.users.repository import USER_MODEL
 
 RESOURCE = TypeVar("RESOURCE", bound=Resource)
 
@@ -32,8 +31,7 @@ class CRuMbAdmin(UserControl):
     _resources: ClassVar[dict[str, Type["Resource"]]] = {}
     title: ClassVar[str] = 'CRuMb Admin'
     menu_groups: ClassVar[list[Type[MenuGroup]]] = []
-    translations: ClassVar[AppTranslation] = import_string(get_settings().APP_TRANSLATIONS)
-    user_repository: ClassVar[Type["BaseUserRepository"]]
+    translations: ClassVar[AppTranslation] = get_app_translations()
 
     def __init__(self, page: Page, user: "USER_MODEL"):
         super().__init__(expand=True)  # чтобы вложенные элементы тоже расширялись
@@ -141,7 +139,8 @@ class CRuMbAdmin(UserControl):
     @classmethod
     async def on_startup(cls):
         await db_connection.init()
-        cls.user_repository = import_string(get_settings().USER_REPOSITORY)
+        cls.user_repository = get_user_repository()
+        cls.user_resource = get_user_resource()
         importlib.import_module('configuration.resources')
 
     @classmethod

@@ -33,3 +33,7 @@ class InfoRegisterRepository(BaseRegisterRepository[IR, IRR]):
                 values=[time_point] if time_point else None
             )
         return rows
+
+    @classmethod
+    async def get_results(cls, item_pks: list):
+        raise NotImplementedError()

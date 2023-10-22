@@ -1,4 +1,5 @@
-from dataclasses import dataclass, asdict
+from asyncio import iscoroutinefunction
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeVar, Optional, Any, Generic, Type, Union, Callable, Coroutine, Literal
 
 from flet import Control
@@ -142,16 +143,19 @@ class UserInputWidget(Generic[T]):
             return False
 
     async def handle_value_change_and_update(self, widget: "UserInputWidget"):
-        self.handle_value_change(widget=widget)
+        await self.handle_value_change(widget=widget)
         await self.form.update_async()
 
-    def handle_value_change(self, widget: "UserInputWidget"):
+    async def handle_value_change(self, widget: "UserInputWidget"):
         if self is widget:
             if not self.is_valid():
                 return
         if self.on_value_change:
-            self.on_value_change(widget)
-        self.parent.handle_value_change(widget)
+            if iscoroutinefunction(self.on_value_change):
+                await self.on_value_change(widget)
+            else:
+                self.on_value_change(widget)
+        await self.parent.handle_value_change(widget)
 
     @property
     def on_start_changing(self):

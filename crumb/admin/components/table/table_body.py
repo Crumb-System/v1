@@ -68,6 +68,7 @@ class TableBody(Generic[TR], Container):
             self.rows.remove(index_or_row)
 
     def remove_all_rows(self):
+        self.active_row = None
         self.rows.clear()
 
     def update_width(self):

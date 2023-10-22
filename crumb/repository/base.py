@@ -113,7 +113,7 @@ class BaseRepository(Generic[MODEL]):
 
     @classmethod
     def get_field_type(cls, field_name: str) -> FieldTypes:
-        return cls.describe().all[field_name]
+        return cls.describe().all.get(field_name, FieldTypes.UNDEFINED)
 
     @classmethod
     def get_field_instance(cls, field_name: str) -> fields.Field:

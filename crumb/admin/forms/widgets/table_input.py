@@ -51,25 +51,25 @@ class TableInputWidget(UserInputWidget[list[dict[str, Any]]], Container):
         return Row([
             IconButton(
                 icons.ADD_CIRCLE_OUTLINE_OUTLINED,
-                on_click=self.handle_add_row,
+                on_click=self.add_row_async,
                 icon_color='green',
                 tooltip='Добавить'
             ),
             IconButton(
                 icons.REMOVE_CIRCLE_OUTLINE_OUTLINED,
-                on_click=self.handle_delete_row,
+                on_click=self.remove_active_row_async,
                 icon_color='error',
                 tooltip='Удалить'
             ),
             IconButton(
                 icons.ARROW_CIRCLE_UP_OUTLINED,
-                on_click=self.handle_move_row_up,
+                on_click=self.move_row_up_async,
                 icon_color='primary',
                 tooltip='Переместить вверх'
             ),
             IconButton(
                 icons.ARROW_CIRCLE_DOWN_OUTLINED,
-                on_click=self.handle_move_row_down,
+                on_click=self.move_row_down_async,
                 icon_color='primary',
                 tooltip='Переместить вниз'
             ),
@@ -87,37 +87,59 @@ class TableInputWidget(UserInputWidget[list[dict[str, Any]]], Container):
         )
 
     def create_table_row(self, initial: BaseModel | dict[str, Any] = UndefinedValue) -> ObjectTableRowWidget:
-        widget = self.object_schema.widget(parent=self, initial=initial)
+        widget = self.object_schema.widget(parent=self, initial=initial, name=f'{self.name}_row')
         self.table.add_row(widget)
         return widget
 
-    async def handle_add_row(self, e):
+    def add_row(self):
         widget = self.create_table_row()
         widget.set_value({'ordering': self.table.body.length})
         self.table.active_row = widget
+        return widget
+
+    async def add_row_async(self, e=None):
+        self.add_row()
         await self.table.scroll_to_async(offset=-1, duration=10)
 
-    async def handle_delete_row(self, e):
+    def remove_row(self, row: ObjectTableRowWidget):
+        idx = row.index
+        table_length = self.table.length
+        if row.is_active:
+            if idx == 0:
+                if table_length == 1:
+                    self.table.active_row = None
+                else:
+                    self.table.active_row = self.table.get_row(1)
+            elif idx == table_length - 1:
+                self.table.active_row = self.table.get_row(idx - 1)
+            else:
+                self.table.active_row = self.table.get_row(idx + 1)
+        self.table.remove_row(row)
+        for i, row in enumerate(self.table[idx:], start=idx + 1):
+            row.set_value({'ordering': i})
+
+    async def remove_row_async(self, row: ObjectTableRowWidget):
+        self.remove_row(row)
+        await self.table.update_async()
+
+    def remove_active_row(self):
         active_row = self.table.active_row
         if active_row is None:
             return
-        idx = active_row.index
-        table_length = self.table.length
-        if idx == 0:
-            if table_length == 1:
-                self.table.active_row = None
-            else:
-                self.table.active_row = self.table.get_row(1)
-        elif idx == table_length - 1:
-            self.table.active_row = self.table.get_row(idx - 1)
-        else:
-            self.table.active_row = self.table.get_row(idx + 1)
-        self.table.remove_row(active_row)
-        for i, row in enumerate(self.table[idx:], start=idx + 1):
-            row.set_value({'ordering': i})
+        self.remove_row(active_row)
+
+    async def remove_active_row_async(self, e=None):
+        self.remove_active_row()
         await self.table.update_async()
 
-    async def handle_move_row_up(self, e):
+    def remove_all_rows(self):
+        self.table.remove_all_rows()
+
+    async def remove_all_rows_async(self, e=None):
+        self.remove_all_rows()
+        await self.table.update_async()
+
+    async def move_row_up_async(self, e=None):
         active_row = self.table.active_row
         if active_row is None:
             return
@@ -127,7 +149,7 @@ class TableInputWidget(UserInputWidget[list[dict[str, Any]]], Container):
         self.swap_rows(active_row, self.table.get_row(idx - 1))
         await self.table.body.update_async()
 
-    async def handle_move_row_down(self, e):
+    async def move_row_down_async(self, e=None):
         active_row = self.table.active_row
         if active_row is None:
             return
@@ -151,6 +173,9 @@ class TableInputWidget(UserInputWidget[list[dict[str, Any]]], Container):
         assert isinstance(value, dict) and all(isinstance(k, int) for k in value)
         for index, row_value in value.items():
             self.table.get_row(index).set_value(row_value)
+
+    def get_row(self, idx: int) -> ObjectTableRowWidget:
+        return self.table.get_row(idx)
 
     def set_error(self, err: dict[int, dict[str, Any]]):
         for index, error in err.items():

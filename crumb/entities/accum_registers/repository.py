@@ -23,3 +23,7 @@ class AccumRegisterRepository(BaseRegisterRepository[AR, ARR]):
         if time_point:
             query = query.filter(dt__le=time_point)
         return await query.group_by(*cls.group_by).values(*cls.group_by, 'result')
+
+    @classmethod
+    async def get_results(cls, item_pks: list):
+        raise NotImplementedError()

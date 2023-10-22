@@ -9,6 +9,10 @@ from ...widget_containers import TableCellWidgetContainer
 class ObjectTableRowWidget(ObjectBaseWidget[TableCellWidgetContainer], TableRow):
     child_container = TableCellWidgetContainer
 
+    @property
+    def full_name(self) -> str:
+        return f'{self.parent.full_name}.{self.index}'
+
     def __init__(self, **kwargs):
         ObjectBaseWidget.__init__(self, **kwargs)
         TableRow.__init__(self)

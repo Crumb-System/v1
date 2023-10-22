@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, Optional, Coroutine
+from typing import TYPE_CHECKING, Callable, Optional, Coroutine, Sequence
 
 from flet import Row, IconButton, icons, TapEvent
 
@@ -23,6 +23,7 @@ class ChoiceForm(BaseListForm):
             per_page_variants: tuple[int, ...] = (10, 25, 50, 100),
             select_related: tuple[str] = EMPTY_TUPLE,
             prefetch_related: tuple[str] = EMPTY_TUPLE,
+            sort: str | Sequence[str] = EMPTY_TUPLE
     ):
         super().__init__(
             box=box,
@@ -31,6 +32,7 @@ class ChoiceForm(BaseListForm):
             per_page_variants=per_page_variants,
             select_related=select_related,
             prefetch_related=prefetch_related,
+            sort=sort,
         )
         self.make_choice = make_choice
 
